@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<title>D3: Stack layout stacked bar chart</title>
+		<script type="text/javascript" src="../d3/d3-4.2.2.min.js"></script>
+		<style type="text/css">
+			/* No style rules here yet */
+		</style>
+	</head>
+	<body>
+		<script type="text/javascript">
+
+			//Width and height
+			var w = 500;
+			var h = 300;
+			var barPadding = 5;
+
+
+var mydata = [
+{ apples: 5, oranges: 10, grapes: 22 },
+{ apples: 4, oranges: 12, grapes: 28 },
+{ apples: 2, oranges: 19, grapes: 32 },
+{ apples: 7, oranges: 23, grapes: 35 },
+{ apples: 23, oranges: 17, grapes: 43 }
+];
+
+// 資料轉換後，才能繪製 stack chart
+var mystack = d3.stack()
+    .keys(["apples", "oranges", "grapes"]);
+    // .order(d3.stackOrderNone)
+    // .offset(d3.stackOffsetNone);
+
+var dataset = mystack(mydata);
+
+//資料轉換後的結果
+// JSON.stringify(dataset, null, '\t');
+// "[
+// 	[
+// 		[0,5],
+// 		[0,4],
+// 		[0,2],
+// 		[0,7],
+// 		[0,23]
+// 	],
+// 	[
+// 		[5,15],
+// 		[4,16],
+// 		[2,21],
+// 		[7,30],
+// 		[23,40]
+// 	],
+// 	[
+// 		[15,37],
+// 		[16,44],
+// 		[21,53],
+// 		[30,65],
+// 		[40,83]
+// 	]
+// ]"
+
+			//Set up scales
+			var xScale = d3.scaleBand()
+				.domain(d3.range(dataset[0].length))
+				.range([0, w], 0.05);
+
+			var yScale = d3.scaleLinear()
+				.domain([0,
+					d3.max(dataset, function(d) {
+						return d3.max(d, function(d) {
+							// 找到 d[1] 的最大值，就是圖形 y 軸的最大值
+
+							// console.log("d="+d);
+							// d=0,5
+							// d=0,4
+							// d=0,2
+							// d=0,7
+							// d=0,23
+							// -------
+							// d=5,15
+							// d=4,16
+							// d=2,21
+							// d=7,30
+							// d=23,40
+							// -------
+							// d=15,37
+							// d=16,44
+							// d=21,53
+							// d=30,65
+							// d=40,83
+							//return d.y0 + d.y;
+							return d[1];
+						});
+					})
+				])
+				// 對應 svg 的高度
+				.range([0, h]);
+
+			//Easy colors accessible via a 10-step ordinal scale
+			var colors = d3.scaleOrdinal(d3.schemeCategory10);
+
+			//Create SVG element
+			var svg = d3.select("body")
+						.append("svg")
+						.attr("width", w)
+						.attr("height", h);
+
+			// Add a group for each row of data
+			// 建立每一行的資料
+			var groups = svg.selectAll("g")
+				.data(dataset)
+				.enter()
+				.append("g")
+				.style("fill", function(d, i) {
+					return colors(i);
+				});
+
+			// Add a rect for each data value
+			// 產生矩形
+			var rects = groups.selectAll("rect")
+				.data(function(d) { return d; })
+				.enter()
+				.append("rect")
+				// x 軸的位置要對應到 xScale
+				.attr("x", function(d, i) {
+// console.log("attr x i="+i+", d[0]="+d[0]+", d[1]="+d[1]+", xScale(i)="+xScale(i));
+// 03_stacked_bar.html:105 attr x i=0, d[0]=0, d[1]=5, xScale(i)=0
+// 03_stacked_bar.html:105 attr x i=1, d[0]=0, d[1]=4, xScale(i)=100
+// 03_stacked_bar.html:105 attr x i=2, d[0]=0, d[1]=2, xScale(i)=200
+// 03_stacked_bar.html:105 attr x i=3, d[0]=0, d[1]=7, xScale(i)=300
+// 03_stacked_bar.html:105 attr x i=4, d[0]=0, d[1]=23, xScale(i)=400
+// 03_stacked_bar.html:105 attr x i=0, d[0]=5, d[1]=15, xScale(i)=0
+// 03_stacked_bar.html:105 attr x i=1, d[0]=4, d[1]=16, xScale(i)=100
+// 03_stacked_bar.html:105 attr x i=2, d[0]=2, d[1]=21, xScale(i)=200
+// 03_stacked_bar.html:105 attr x i=3, d[0]=7, d[1]=30, xScale(i)=300
+// 03_stacked_bar.html:105 attr x i=4, d[0]=23, d[1]=40, xScale(i)=400
+// 03_stacked_bar.html:105 attr x i=0, d[0]=15, d[1]=37, xScale(i)=0
+// 03_stacked_bar.html:105 attr x i=1, d[0]=16, d[1]=44, xScale(i)=100
+// 03_stacked_bar.html:105 attr x i=2, d[0]=21, d[1]=53, xScale(i)=200
+// 03_stacked_bar.html:105 attr x i=3, d[0]=30, d[1]=65, xScale(i)=300
+// 03_stacked_bar.html:105 attr x i=4, d[0]=40, d[1]=83, xScale(i)=400
+					return xScale(i);
+				})
+				// y 軸的起點位置要對應到 yScale
+				.attr("y", function(d) {
+// console.log("attr y, d[0]="+d[0]+", d[1]="+d[1]+" yScale(d[0])="+yScale(d[0]));
+// attr y, d[0]=0, d[1]=5 yScale(d[1])=18.072289156626507
+// 03_stacked_bar.html:168 attr y, d[0]=0, d[1]=4 yScale(d[1])=14.457831325301205
+// 03_stacked_bar.html:168 attr y, d[0]=0, d[1]=2 yScale(d[1])=7.228915662650603
+// 03_stacked_bar.html:168 attr y, d[0]=0, d[1]=7 yScale(d[1])=25.301204819277107
+// 03_stacked_bar.html:168 attr y, d[0]=0, d[1]=23 yScale(d[1])=83.13253012048193
+// 03_stacked_bar.html:168 attr y, d[0]=5, d[1]=15 yScale(d[1])=54.21686746987952
+// 03_stacked_bar.html:168 attr y, d[0]=4, d[1]=16 yScale(d[1])=57.83132530120482
+// 03_stacked_bar.html:168 attr y, d[0]=2, d[1]=21 yScale(d[1])=75.90361445783132
+// 03_stacked_bar.html:168 attr y, d[0]=7, d[1]=30 yScale(d[1])=108.43373493975903
+// 03_stacked_bar.html:168 attr y, d[0]=23, d[1]=40 yScale(d[1])=144.57831325301206
+// 03_stacked_bar.html:168 attr y, d[0]=15, d[1]=37 yScale(d[1])=133.73493975903614
+// 03_stacked_bar.html:168 attr y, d[0]=16, d[1]=44 yScale(d[1])=159.03614457831327
+// 03_stacked_bar.html:168 attr y, d[0]=21, d[1]=53 yScale(d[1])=191.56626506024094
+// 03_stacked_bar.html:168 attr y, d[0]=30, d[1]=65 yScale(d[1])=234.93975903614458
+// 03_stacked_bar.html:168 attr y, d[0]=40, d[1]=83 yScale(d[1])=300
+					return yScale(d[0]);
+				})
+				// 矩形的高度就是 d[1] 及 d[0] 的差異
+				.attr("height", function(d) {
+					return yScale(d[1]-d[0]);
+				})
+				// 矩形的寬度要扣掉一點點 padding，讓長條之間留下一些空白
+				.attr("width", xScale.bandwidth()-barPadding);
+
+		</script>
+	</body>
+</html>

@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<title>D3: Loading data from a CSV file</title>
+		<script type="text/javascript" src="../d3/d3-4.2.2.min.js"></script>
+	</head>
+	<body>
+		<script type="text/javascript">
+
+			var dataset;
+			d3.csv("food.csv", function(error, data) {
+				if (error) {
+					console.log(error); // 輸出錯誤
+				} else {
+					console.log(data); // 輸出資料
+					dataset = data;
+				}
+			});
+
+		</script>
+	</body>
+</html>
