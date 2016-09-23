@@ -112,14 +112,14 @@
 
 			//Create X axis
 			svg.append("g")
-				.attr("class", "axis")
+				.attr("class", "x axis")
 				.attr("transform", "translate(0," + (h - padding) + ")")
 				.call(xAxis);
 
 			//Create Y axis
 			svg.append("g")
-				.attr("class", "axis")
-				.attr("transform", "translate(" + padding + ",0)")
+				.attr("class", "y axis")
+				//.attr("transform", "translate(" + padding + ",0)")
 				.call(yAxis);
 
 		</script>

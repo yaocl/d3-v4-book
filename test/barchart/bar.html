@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<title>D3: A chart transition with controlled duration</title>
+		<script type="text/javascript" src="../../d3/d3-4.2.2.min.js"></script>
+		<style type="text/css">
+			/* No style rules here yet */
+		</style>
+	</head>
+	<body>
+
+		<p>Click on this text to update the chart with new data values (once).</p>
+
+		<script type="text/javascript">
+			var parseDate = d3.timeFormat("%Y-%m-%d").parse;
+
+			//Width and height
+			var w = 800;
+			var h = 500;
+
+			var padding = 30;
+			var margin = {top: 40, right: 40, bottom: 40, left:40}
+
+			var barPadding = 1;
+
+			var dataset = [
+				{"date":"2012-03-01","answer":1,"noanswer":6},
+				{"date":"2012-03-02","answer":8,"noanswer":6},
+				{"date":"2012-03-05","answer":2,"noanswer":6},
+				{"date":"2012-03-06","answer":10,"noanswer":6},
+				{"date":"2012-03-10","answer":3,"noanswer":6},
+				{"date":"2012-03-11","answer":20,"noanswer":6},
+				{"date":"2012-03-12","answer":12,"noanswer":6},
+				{"date":"2012-03-31","answer":130,"noanswer":150}];
+
+			var xScale = d3.scaleTime()
+						.domain(
+							[ d3.timeDay.offset(new Date(dataset[0].date),-1),
+							d3.timeDay.offset(new Date(dataset[dataset.length - 1].date), 0) ]
+						 )
+						//.range([0, w], 0.05);
+						.range([padding, w - padding * 2]);
+
+			// var ymax1 = d3.max(dataset, function(d) { return d.answer; });
+			// var ymax2 = d3.max(dataset, function(d) { return d.noanswer; });
+			// var ymax = Math.max(ymax1, ymax2);
+
+			var yScale = d3.scaleLinear()
+							.domain([0, d3.max(dataset, function(d) { return d.answer; })])
+							//.range([0, h]);
+							.range([h-padding, padding]);
+
+			var xAxis = d3.axisBottom()
+						.scale(xScale)
+						//.ticks(d3.timeDays, 1)
+						.tickFormat(d3.timeFormat('%d日'))
+						.tickSize(1)
+    					.tickPadding(5);
+
+			var yAxis = d3.axisLeft()
+						.scale(yScale)
+						.ticks(5);
+
+			//Create SVG element
+			var svg = d3.select("body")
+						.append("svg")
+						.attr("width", w)
+						.attr("height", h);
+
+			//Create bars
+			svg.selectAll("rect")
+			   .data(dataset)
+			   .enter()
+			   .append("rect")
+			   .attr("x", function(d,i) {
+					//return xScale(i);
+					//console.log("d.date="+d.date+", i="+i);
+					return xScale(new Date(d.date)) - 15;
+			   })
+			   .attr("y", function(d,i) {
+			   		//console.log("d.answer="+d.answer+", i="+i);
+					return h - padding*2 - ( h-yScale(d.answer)-padding*2 );
+			   })
+			   .attr("width", 10)
+			   .attr("height", function(d) {
+					return ( h-yScale(d.answer)-padding );
+			   })
+			   .attr("fill", function(d) {
+					//return "rgb(0, 0, " + (d.answer * 10) + ")";
+					return "steelblue";
+			   });
+
+			//Create labels
+			// svg.selectAll("text")
+			//    .data(dataset)
+			//    .enter()
+			//    .append("text")
+			//    .text(function(d) {
+			// 		return d;
+			//    })
+			//    .attr("text-anchor", "middle")
+			//    .attr("x", function(d, i) {
+			// 		//return xScale(i) + xScale.bandwidth() / 2;
+			// 		return xScale(i) + 10 / 2;
+			//    })
+			//    .attr("y", function(d) {
+			// 		return h - yScale(d.answer) + 14;
+			//    })
+			//    .attr("font-family", "sans-serif")
+			//    .attr("font-size", "11px")
+			//    .attr("fill", "white");
+
+
+			// Create X axis
+			svg.append("g")
+				.attr("class", "x axis")
+				.attr("transform", "translate(0," + (h - padding) + ")")
+				.call(xAxis);
+
+			//Create Y axis
+			svg.append("g")
+				.attr("class", "y axis")
+				.attr("transform", "translate( " + padding + ",0)")
+				.call(yAxis);
+
+
+			//On click, update with new data
+			// d3.select("p")
+			// 	.on("click", function() {
+
+			// 		//New values for dataset
+			// 		dataset = [ 11, 12, 15, 20, 18, 17, 16, 18, 23, 25,
+			// 					5, 10, 13, 19, 21, 25, 22, 18, 15, 13 ];
+
+			// 		//Update all rects
+			// 		svg.selectAll("rect")
+			// 		   .data(dataset)
+			// 		   .transition()
+			// 		   .duration(1000)								// <-- Controlled duration, 1000ms = 1s
+			// 		   .attr("y", function(d) {
+			// 		   		return h - yScale(d);
+			// 		   })
+			// 		   .attr("height", function(d) {
+			// 		   		return yScale(d);
+			// 		   })
+			// 		   .attr("fill", function(d) {
+			// 				return "rgb(0, 0, " + (d * 10) + ")";
+			// 		   });
+
+			// 		//Update all labels
+			// 		svg.selectAll("text")
+			// 		   .data(dataset)
+			// 		   .text(function(d) {
+			// 		   		return d;
+			// 		   })
+			// 		   .attr("x", function(d, i) {
+			// 		   		return xScale(i) + xScale.bandwidth() / 2;
+			// 		   })
+			// 		   .attr("y", function(d) {
+			// 		   		return h - yScale(d) + 14;
+			// 		   });
+
+			// 	});
+
+
+		</script>
+	</body>
+</html>

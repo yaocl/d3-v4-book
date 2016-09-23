@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+body {
+  font: 10px sans-serif;
+}
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+.bar {
+  fill: steelblue;
+}
+
+/* .x.axis path {
+  display: none;
+} */
+
+</style>
+<body>
+<script src="../../d3/d3-4.2.6.min.js"></script>
+<script>
+// ref: http://stackoverflow.com/questions/24115053/d3-js-how-to-read-data-from-json-in-grouped-bar-chart
+
+var data = {
+  "cdr": [
+    { "date":"2016-03-01", "answer": "12", "noanswer": "30" },
+    { "date":"2016-03-02", "answer": "7", "noanswer": "15" },
+    { "date":"2016-03-03", "answer": "15", "noanswer": "35" },
+    { "date":"2016-03-04", "answer": "5", "noanswer": "18" },
+    { "date":"2016-03-21", "answer": "10", "noanswer": "55" },
+    { "date":"2016-03-31", "answer": "8", "noanswer": "45" }
+  ]
+};
+
+var margin = {top: 20, right: 20, bottom: 30, left: 40},
+    width = 960 - margin.left - margin.right,
+    height = 500 - margin.top - margin.bottom;
+
+// var x0 = d3.scaleBand()
+//     .range([0, width], .1)
+//     .padding(.3);
+
+var x0 = d3.scaleTime()
+    .rangeRound([0, width], .1)
+    .nice(d3.timeDay);
+
+var x1 = d3.scaleBand();
+
+var y = d3.scaleLinear()
+    .range([height, 0]);
+
+// var color = d3.scaleOrdinal()
+//     .range(["#98abc5", "#8a89a6", "#7b6888", "#6b486b", "#a05d56", "#d0743c", "#ff8c00"]);
+
+var color = d3.scaleOrdinal(d3.schemeCategory10);
+
+var xAxis = d3.axisBottom()
+    .scale(x0)
+    .tickFormat(d3.timeFormat('%d日'))
+    .tickSize(8);
+
+var yAxis = d3.axisLeft()
+    .scale(y)
+    .tickFormat(d3.format(".2s"));
+
+var svg = d3
+    .select("body")
+    .append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+    .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+// d3.json("data.json", function(error, data) {
+//   if (error) throw error;
+
+  var ageNames = d3.keys(data.cdr[0]).filter(function(key) {
+    return key !== "date";
+  });
+  //var ageNames = d3.keys(data[0]).filter(function(key) { return key !== "date"; });
+
+  data.cdr.forEach(function(d) {
+    d.ages = ageNames.map(function(name) { return {name: name, value: +d[name]}; });
+  });
+
+  // data.forEach(function(d) {
+  //   d.ages = ageNames.map(function(name) { return {name: name, value: +d[name]}; });
+  // });
+
+
+  //x0.domain(data.cdr.map(function(d) { return d.date; }));
+  x0.domain(
+      [ d3.timeDay.offset(new Date(data.cdr[0].date),-1),
+      d3.timeDay.offset(new Date(data.cdr[data.cdr.length - 1].date), 0) ]
+     );
+
+  x1.domain(ageNames)
+    .range([0, x0(new Date(data.cdr[0].date))]);
+
+  y.domain([0, d3.max(data.cdr, function(d) { return d3.max(d.ages, function(d) { return d.value; }); })]);
+
+  // x0.domain(data.map(function(d) { return d.date; }));
+  // x1.domain(ageNames).rangeRoundBands([0, x0.rangeBand()]);
+  // y.domain([0, d3.max(data, function(d) { return d3.max(d.ages, function(d) { return d.value; }); })]);
+
+  svg.append("g")
+      .attr("class", "x axis")
+      .attr("transform", "translate(0," + height + ")")
+      .call(xAxis);
+
+  svg.append("g")
+      .attr("class", "y axis")
+      .call(yAxis)
+      .append("text")
+      .attr("transform", "rotate(-90)")
+      .attr("y", 6)
+      .attr("dy", ".71em")
+      .style("text-anchor", "end")
+      .text("Population");
+
+  var date = svg.selectAll(".date")
+    .data(data.cdr)
+    .enter()
+    .append("g")
+    .attr("class", "g")
+    .attr("transform", function(d) { return "translate(" + (x0(new Date(d.date))-22 ) + ",0)"; });
+
+  // var date = svg.selectAll(".date")
+  //     .data(data)
+  //   .enter().append("g")
+  //     .attr("class", "date")
+  //     .attr("transform", function(d) { return "translate(" + x0(d.date) + ",0)"; });
+
+  date.selectAll("rect")
+      .data(function(d) { return d.ages; })
+      .enter()
+      .append("rect")
+      .attr("width", x1.bandwidth()-2 )
+      .attr("x", function(d) {
+          var subvalue = -1;
+          if(d.name=='answer') {
+            subvalue = 1;
+          }
+          return x1(d.name)+subvalue;
+        }
+      )
+      .attr("y", function(d) { return y(d.value); })
+      .attr("height", function(d) { return height - y(d.value); })
+      .style("fill", function(d) { return color(d.name); });
+
+  var legend = svg.selectAll(".legend")
+      .data(ageNames.slice().reverse())
+      .enter()
+      .append("g")
+      .attr("class", "legend")
+      .attr("transform", function(d, i) { return "translate(0," + i * 20 + ")"; });
+
+  legend.append("rect")
+      .attr("x", width - 18)
+      .attr("width", 18)
+      .attr("height", 18)
+      .style("fill", color);
+
+  legend.append("text")
+      .attr("x", width - 24)
+      .attr("y", 9)
+      .attr("dy", ".35em")
+      .style("text-anchor", "end")
+      .text(function(d) { return d; });
+
+// });
+
+</script>
