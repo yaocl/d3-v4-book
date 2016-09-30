@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+body {
+	font: 10px sans-serif;
+}
+
+.axis path,
+.axis line {
+	fill: none;
+	stroke: #000;
+	shape-rendering: crispEdges;
+}
+
+.bar {
+	fill: steelblue;
+}
+
+#tooltip {
+	position: absolute;
+	width: auto;
+	height: auto;
+	padding: 10px;
+	background-color: seagreen;
+	-webkit-border-radius: 10px;
+	-moz-border-radius: 10px;
+	border-radius: 10px;
+	-webkit-box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
+	-moz-box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
+	box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
+	pointer-events: none;
+}
+
+#tooltip.hidden {
+	display: none;
+}
+
+#tooltip p {
+	margin: 0;
+	font-family: sans-serif;
+	font-size: 16px;
+	line-height: 20px;
+}
+
+/* .x.axis path {
+	display: none;
+} */
+
+</style>
+<body>
+<div id="tooltip" class="hidden">
+	<p><span id="tipvalue">answer: 100</span></p>
+</div>
+
+<p id="update">Click on this text to update the chart with new data values (once).</p>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+
+<script src="../../d3/d3-4.2.6.min.js"></script>
+<script>
+// ref: http://stackoverflow.com/questions/24115053/d3-js-how-to-read-data-from-json-in-grouped-bar-chart
+
+// var data = {
+// 	"cdr": [
+// 		{ "source":"c1.kokome.com.tw", "answer": "12", "noanswer": "30" },
+// 		{ "source":"web.maxkit.com.tw", "answer": "7", "noanswer": "15" },
+// 		{ "source":"www.maxkit.com.tw", "answer": "15", "noanswer": "35" }
+// 	]
+// };
+
+var data = {
+	"cdr": [
+		// { "source":"c1.kokome.com.tw", "answer": "12" },
+		// { "source":"web.maxkit.com.tw", "answer": "7" },
+		// { "source":"www.maxkit.com.tw", "answer": "15" },
+		// { "source":"www1.maxkit.com.tw", "answer": "15" },
+		// { "source":"www2.maxkit.com.tw", "answer": "12" },
+		// { "source":"www3.maxkit.com.tw", "answer": "13" },
+		// { "source":"www4.maxkit.com.tw", "answer": "14" },
+		// { "source":"www5.maxkit.com.tw", "answer": "16" },
+		// { "source":"www6.maxkit.com.tw", "answer": "17" },
+		// { "source":"www7.maxkit.com.tw", "answer": "2" },
+		// { "source":"www8.maxkit.com.tw", "answer": "20" },
+		// { "source":"www9.maxkit.com.tw", "answer": "11" },
+		// { "source":"www10.maxkit.com.tw", "answer": "15" },
+		// { "source":"www11.maxkit.com.tw", "answer": "15" },
+		// { "source":"www12.maxkit.com.tw", "answer": "12" },
+		// { "source":"www13.maxkit.com.tw", "answer": "13" },
+		// { "source":"www14.maxkit.com.tw", "answer": "14" },
+		// { "source":"www15.maxkit.com.tw", "answer": "16" },
+		// { "source":"www16.maxkit.com.tw", "answer": "17" },
+		// { "source":"www17.maxkit.com.tw", "answer": "2" },
+		// { "source":"www18.maxkit.com.tw", "answer": "20" },
+		// { "source":"www19.maxkit.com.tw", "answer": "11" },
+		// { "source":"www20.maxkit.com.tw", "answer": "15" },
+		// { "source":"www21.maxkit.com.tw", "answer": "15" },
+		// { "source":"www22.maxkit.com.tw", "answer": "12" },
+		// { "source":"www23.maxkit.com.tw", "answer": "13" },
+		// { "source":"www24.maxkit.com.tw", "answer": "14" },
+		// { "source":"www25.maxkit.com.tw", "answer": "16" },
+		// { "source":"www26.maxkit.com.tw", "answer": "17" },
+		// { "source":"www27.maxkit.com.tw", "answer": "2" },
+		// { "source":"www28.maxkit.com.tw", "answer": "20" },
+		// { "source":"www29.maxkit.com.tw", "answer": "11" },
+		{ "source":"www30.maxkit.com.tw", "answer": "15" },
+		{ "source":"www31.maxkit.com.tw", "answer": "15" },
+		{ "source":"www32.maxkit.com.tw", "answer": "12" },
+		{ "source":"www33.maxkit.com.tw", "answer": "13" },
+		{ "source":"www34.maxkit.com.tw", "answer": "14" },
+		{ "source":"www35.maxkit.com.tw", "answer": "16" },
+		{ "source":"www36.maxkit.com.tw", "answer": "17" },
+		{ "source":"www37.maxkit.com.tw", "answer": "2" },
+		{ "source":"www38.maxkit.com.tw", "answer": "20" },
+		{ "source":"www39.maxkit.com.tw", "answer": "11" },
+		{ "source":"www40.maxkit.com.tw", "answer": "15" },
+		{ "source":"www41.maxkit.com.tw", "answer": "15" },
+		{ "source":"www42.maxkit.com.tw", "answer": "12" },
+		{ "source":"www43.maxkit.com.tw", "answer": "13" },
+		{ "source":"www44.maxkit.com.tw", "answer": "14" },
+		{ "source":"www45.maxkit.com.tw", "answer": "16" },
+		{ "source":"www46.maxkit.com.tw", "answer": "17" },
+		{ "source":"www47.maxkit.com.tw", "answer": "2" },
+		{ "source":"www48.maxkit.com.tw", "answer": "20" },
+		{ "source":"www49.maxkit.com.tw", "answer": "11" },
+		{ "source":"www50.maxkit.com.tw", "answer": "15" }
+	]
+};
+
+
+var color = d3.scaleOrdinal(d3.schemeCategory20);
+var tooltipcolor = d3.scaleOrdinal(d3.schemeCategory20.reverse());
+
+var margin = {top: 20, right: 20, bottom: 30, left: 40},
+		width = 600 - margin.left - margin.right,
+		height = 500 - margin.top - margin.bottom;
+
+var outerRadius = 150;
+var innerRadius = 0;
+
+var source_svg = d3
+		.select("body")
+		.append("svg")
+		//.data( [data.cdr] )
+		.attr("width", width + margin.left + margin.right)
+		.attr("height", height + margin.top + margin.bottom)
+		.append("g")
+		.attr("transform", "translate(" + 1.5*outerRadius + "," + 1.5*outerRadius + ")");
+
+// This will create <path> elements for us using arc data...
+var source_arc = d3.arc()
+	.innerRadius(innerRadius)
+	.outerRadius(outerRadius);
+
+//this will create arc data for us given a list of values
+var source_pie = d3.pie();
+
+source_pie.value(function(d) {
+	//console.log("d=",d);
+	return d.answer;
+	})
+	.sort( function(d) { return null; } );
+
+
+var arcs = source_svg
+	.selectAll("g.arc")
+	.data( source_pie( data.cdr ) )
+	.enter()
+	.append("g")
+	.attr("class", "arc");
+
+arcs.append("path")
+	.attr("fill", function(d, i) {
+		//console.log("d=",d);
+		//console.log("i="+i);
+		return color(i);
+	})
+	.attr("d", source_arc)
+	.on("mouseover", function(){
+			d3.select("#tooltip").classed("hidden", false);
+		}
+	)
+	.on("mousemove", function(d, i) {
+		//console.log("d=",d);
+		//console.log("i="+i+", d=",d+", color(i)="+color(i)+", color(i+1)="+color(i+1));
+		//console.log("event.pageY="+event.pageY+", event.pageX="+event.pageX);
+
+		var xPosition = event.pageX;
+		var yPosition = event.pageY;
+
+		//Update the tooltip position and value
+		d3.select("#tooltip")
+			.style("left", xPosition + "px")
+			.style("top", yPosition + "px");
+
+		$('#tipvalue').text( d.data.source + ": "+d.value);
+		$("#tooltip").css("background-color", tooltipcolor(i));
+
+		//Show the tooltip
+		d3.select("#tooltip").classed("hidden", false);
+
+	})
+	.on("mouseout", function() {
+		//Hide the tooltip
+		d3.select("#tooltip").classed("hidden", true);
+	});
+
+// Add a magnitude value to the larger arcs, translated to the arc centroid and rotated.
+arcs.filter(function(d) { return d.endAngle - d.startAngle > .2; }).append("svg:text")
+	.attr("dy", ".35em")
+	.attr("text-anchor", "middle")
+	//.attr("transform", function(d) { return "translate(" + arc.centroid(d) + ")rotate(" + angle(d) + ")"; })
+	.attr("transform", function(d) {
+		//set the label's origin to the center of the arc
+		//we have to make sure to set these before calling arc.centroid
+		d.outerRadius = outerRadius;
+		d.innerRadius = outerRadius/2;
+		//return "translate(" + arc.centroid(d) + ")rotate(" + angle(d) + ")";
+		return "translate(" + source_arc.centroid(d) + ")";
+	})
+	.style("fill", "White")
+	.style("font", "bold 12px Arial")
+	.text(function(d) {
+		//console.log("d.data.answer="+d.data.answer);
+		return d.data.answer;
+	});
+
+var sourceNames = data.cdr.map(function(c) {
+		//console.log(c);
+		return c.source;
+	});
+
+var legend = source_svg.selectAll(".legend")
+			.data( sourceNames )
+			.enter()
+			.append("g")
+			.attr("class", "legend")
+			.attr("transform", function(d, i) { return "translate(0," + ( -200+i * 20 )+ ")"; });
+
+legend.append("rect")
+		.attr("x", width - 180)
+		.attr("width", 18)
+		.attr("height", 18)
+		//.style("fill", color);
+		.style("fill", function(d, i) {
+			//console.log("fill i="+i);
+			return color(i);
+		});
+
+legend.append("text")
+		.attr("x", width - 200)
+		.attr("y", 9)
+		.attr("dy", ".35em")
+		.style("text-anchor", "end")
+		.text(function(d) { return d; });
+
+// Computes the angle of an arc, converting from radians to degrees.
+function angle(d) {
+  var a = (d.startAngle + d.endAngle) * 90 / Math.PI - 90;
+  return a > 90 ? a - 180 : a;
+}
+
+
+// });
+	//On click, update with new data
+	var newdata;
+	d3.select("#update")
+		.on("click", function() {
+			//New values for dataset
+			newdata = {
+				"cdr": [
+					{ "source":"c1.kokome.com.tw", "answer": "12" },
+					{ "source":"web.maxkit.com.tw", "answer": "7" },
+					{ "source":"www.maxkit.com.tw", "answer": "15" },
+					{ "source":"www1.maxkit.com.tw", "answer": "20" },
+					{ "source":"www2.maxkit.com.tw", "answer": "100" }
+				]
+			};
+
+			source_svg.selectAll(".arc").remove();
+			var arcs = source_svg
+				.selectAll("g.arc")
+				.data( source_pie( newdata.cdr ) )
+				.enter()
+				.append("g")
+				.attr("class", "arc");
+
+			arcs.append("path")
+				.attr("fill", function(d, i) {
+					//console.log("d=",d);
+					//console.log("i="+i);
+					return color(i);
+				})
+				.attr("d", source_arc)
+				.on("mouseover", function(){
+						d3.select("#tooltip").classed("hidden", false);
+					}
+				)
+				.on("mousemove", function(d, i) {
+					//console.log("d=",d);
+					//console.log("i="+i+", d=",d+", color(i)="+color(i)+", color(i+1)="+color(i+1));
+					//console.log("event.pageY="+event.pageY+", event.pageX="+event.pageX);
+
+					var xPosition = event.pageX;
+					var yPosition = event.pageY;
+
+					//Update the tooltip position and value
+					d3.select("#tooltip")
+						.style("left", xPosition + "px")
+						.style("top", yPosition + "px");
+
+					$('#tipvalue').text( d.data.source + ": "+d.value);
+					$("#tooltip").css("background-color", tooltipcolor(i));
+
+					//Show the tooltip
+					d3.select("#tooltip").classed("hidden", false);
+
+				})
+				.on("mouseout", function() {
+					//Hide the tooltip
+					d3.select("#tooltip").classed("hidden", true);
+				});
+
+			// Add a magnitude value to the larger arcs, translated to the arc centroid and rotated.
+			arcs.filter(function(d) { return d.endAngle - d.startAngle > .2; }).append("svg:text")
+				.attr("dy", ".35em")
+				.attr("text-anchor", "middle")
+				//.attr("transform", function(d) { return "translate(" + arc.centroid(d) + ")rotate(" + angle(d) + ")"; })
+				.attr("transform", function(d) {
+					//set the label's origin to the center of the arc
+					//we have to make sure to set these before calling arc.centroid
+					d.outerRadius = outerRadius;
+					d.innerRadius = outerRadius/2;
+					//return "translate(" + arc.centroid(d) + ")rotate(" + angle(d) + ")";
+					return "translate(" + source_arc.centroid(d) + ")";
+				})
+				.style("fill", "White")
+				.style("font", "bold 12px Arial")
+				.text(function(d) {
+					//console.log("d.data.answer="+d.data.answer);
+					return d.data.answer;
+				});
+
+
+			source_svg.selectAll(".legend").remove();
+
+			var sourceNames = newdata.cdr.map(function(c) {
+					//console.log(c);
+					return c.source;
+				});
+
+			var legend = source_svg.selectAll(".legend")
+						.data( sourceNames )
+						.enter()
+						.append("g")
+						.attr("class", "legend")
+						.attr("transform", function(d, i) { return "translate(0," +  ( -200+i * 20 ) + ")"; });
+
+			legend.append("rect")
+					.attr("x", width - 180)
+					.attr("width", 18)
+					.attr("height", 18)
+					//.style("fill", color);
+					.style("fill", function(d, i) {
+						//console.log("fill i="+i);
+						return color(i);
+					});
+
+			legend.append("text")
+					.attr("x", width - 200)
+					.attr("y", 9)
+					.attr("dy", ".35em")
+					.style("text-anchor", "end")
+					.text(function(d) { return d; });
+		});
+
+</script>

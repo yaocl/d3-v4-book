@@ -66,6 +66,12 @@
 			    	return d.value;
 			    });
 
+
+// Computes the angle of an arc, converting from radians to degrees.
+    function angle(d) {
+      var a = (d.startAngle + d.endAngle) * 90 / Math.PI - 90;
+      return a > 90 ? a - 180 : a;
+    }
 		</script>
 	</body>
 </html>

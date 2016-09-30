@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+.axis text {
+  font: 10px sans-serif;
+}
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+.x.axis path {
+  display: none;
+}
+
+</style>
+<body>
+<script type="text/javascript" src="../d3/d3-4.2.2.min.js"></script>
+<script>
+
+//var n = 5, // number of samples
+//    m = 2; // number of series
+
+//var w = 960;
+//var h = 500;
+//var padding = 30;
+
+var dataset = [
+  {"date":"2012-03-01","answer":1,"noanswer":6},
+  {"date":"2012-03-02","answer":8,"noanswer":6},
+  {"date":"2012-03-05","answer":2,"noanswer":6},
+  {"date":"2012-03-06","answer":10,"noanswer":6},
+  {"date":"2012-03-10","answer":3,"noanswer":6},
+  {"date":"2012-03-11","answer":20,"noanswer":6},
+  {"date":"2012-03-12","answer":12,"noanswer":6},
+  {"date":"2012-03-31","answer":130,"noanswer":150}];
+
+//var data = d3.range(m).map(function() { return d3.range(n).map(Math.random); });
+
+var datamap = d3.map( dataset, function(it) { return it.date; } );
+console.log(datamap);
+
+var valueNames = d3.keys(dataset[0]).filter(function(key) { return key !== "date"; });
+console.log(valueNames);
+
+dataset.forEach(function(d) {
+  d.values = valueNames.map(function(name) { return {name: name, value: +d[name]}; });
+});
+
+// yScale.domain([0, d3.max(dataset, function(d) { return d3.max(d.values, function(d) { return d.value; }); })]);
+
+console.log(dataset);
+
+var margin = {top: 30, right: 30, bottom: 30, left: 30},
+    width = 960 - margin.left - margin.right,
+    height = 500 - margin.top - margin.bottom;
+
+var yScale = d3.scaleLinear()
+    //.domain([0, d3.max(dataset, function(d) { return d.answer; })])
+    .domain([0, d3.max(dataset, function(d) { return d3.max(d.values, function(d) { return d.value; }); })])
+    .range([height, 0]);
+    //.range([h-padding, padding]);
+
+var x0 = d3.scaleTime()
+    .domain(
+      [ d3.timeDay.offset(new Date(dataset[0].date),-1),
+        d3.timeDay.offset(new Date(dataset[dataset.length - 1].date), 0) ]
+    )
+    .range( [0, width] );
+
+var x1 = d3.scaleBand()
+    .domain( d3.range( d3.timeDay.count( d3.timeDay.offset(new Date(dataset[0].date),-1),
+        d3.timeDay.offset(new Date(dataset[dataset.length - 1].date), 0) ) ) )
+    .range( [0, width] )
+    .padding(.3);
+
+var x2 = d3.scaleTime()
+    .domain( d3.range(2) )
+    .range( [0, x1.bandwidth() ] );
+    // .domain(
+    //   [ d3.timeDay.offset(new Date(dataset[0].date),-1),
+    //     d3.timeDay.offset(new Date(dataset[dataset.length - 1].date), 0) ]
+    // )
+    //.range( x0.range() );
+    //.range( [0, x0.bandwidth()] );
+    //.range( [padding, x0.bandwidth()] );
+
+//var z = d3.scaleCategory10();
+var colors = d3.scaleOrdinal(d3.schemeCategory10);
+
+var xAxis = d3.axisBottom()
+            .scale(x0)
+            //.ticks(d3.timeDays, 1)
+            .tickFormat(d3.timeFormat('%d日'));
+            //.tickSize(1)
+            //.tickPadding(5);
+
+var yAxis = d3.axisLeft()
+    .scale(yScale);
+
+var svg = d3.select("body").append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+    .append("svg:g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+svg.append("g")
+    .attr("class", "y axis")
+    .call(yAxis);
+
+svg.append("g")
+    .attr("class", "x axis")
+    .attr("transform", "translate(0," + height + ")")
+    .call(xAxis);
+
+svg.append("g")
+    .selectAll("g")
+    .data( dataset )
+    .enter()
+    .append("g")
+
+    .selectAll("h")
+    .data(function(d) {
+      console.log("d=",d);
+      console.log("do data d.values=",d.values);
+      return d.values; }
+    )
+    .enter()
+    .append("h")
+    .style("fill", function(d, i) {
+      console.log("d.values=",d.values);
+      console.log("fill i="+i+", colors(i)="+colors(i));
+      return colors(i); }
+    )
+
+    // 平移
+    .attr("transform", function(d, i) {
+      console.log("transform("+i+"), x2(i)="+x2(i) );
+      return "translate(" + x2(i) + ",0)"; }
+    )
+
+    .append("rect")
+    .attr("width", x2(1) )
+    .attr("height", function(d,i) {
+      //console.log("d=",d);
+      console.log("height("+i+"), d(name,value)=("+d.name+","+d.value+"), yScale(d.value)="+yScale(d.value)+", height-yScale(d.value)="+(height-yScale(d.value)));
+      return ( height-yScale(d.value) );
+      }
+    )
+    .attr("x", function(d, i) {
+      console.log("x("+i+"), d(name,value)=("+d.name+","+d.value+"), x0(i)="+x0(new Date(dataset[0].date)) );
+      return x0(new Date(dataset[0].date)); }
+    )
+    .attr("y", function(d, i) {
+      console.log("y("+i+"), d(name,value)=("+d.name+","+d.value+"), yScale(d.answer)="+yScale(d.value)+", height - yScale(d.value)="+(height - yScale(d.value)) );
+      return yScale(d.value); }
+    )
+    ;
+
+</script>

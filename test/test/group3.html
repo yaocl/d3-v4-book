@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+.axis text {
+  font: 10px sans-serif;
+}
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+.x.axis path {
+  display: none;
+}
+
+</style>
+<body>
+<script type="text/javascript" src="../d3/d3-4.2.2.min.js"></script>
+<script>
+
+var n = 5, // number of samples
+    m = 2; // number of series
+
+//var w = 960;
+//var h = 500;
+//var padding = 30;
+
+//var data = d3.range(m).map(function() { return d3.range(n).map(Math.random); });
+
+var data = [
+  {"date":1,"answer":0.1,"noanswer":0.15},
+  {"date":2,"answer":0.2,"noanswer":0.15},
+  {"date":3,"answer":0.3,"noanswer":0.15},
+  {"date":4,"answer":0.4,"noanswer":0.15},
+  {"date":5,"answer":0.5,"noanswer":0.15},
+  {"date":6,"answer":0.6,"noanswer":0.15},
+  {"date":7,"answer":0.7,"noanswer":0.15},
+  {"date":8,"answer":0.98,"noanswer":0.95}];
+
+console.log("transposedata = "+d3.transpose(data));
+console.log("data=",data);
+
+var datamap = d3.map( data, function(it) { return it.date; } );
+console.log("datamap=",datamap);
+
+var valueNames = d3.keys(data[0]).filter(function(key) { return key !== "date"; });
+console.log("valueNames=",valueNames);
+
+data.forEach(function(d) {
+  d.values = valueNames.map(function(name) { return {name: name, value: +d[name]}; });
+});
+
+var margin = {top: 30, right: 30, bottom: 30, left: 30},
+    width = 960 - margin.left - margin.right,
+    height = 500 - margin.top - margin.bottom;
+
+var yScale = d3.scaleLinear()
+    .domain([0, d3.max(data, function(d) { return d3.max(d.values, function(d) { return d.value; }); })])
+    .range([height, 0]);
+    //.range([h-padding, padding]);
+
+var x0 = d3.scaleBand()
+    .domain( data.map(function(d) { return d.date; }) )
+    .range( [0, width] )
+    //.range([padding, w - padding * 2])
+    .padding(.3);
+
+var x1 = d3.scaleBand()
+    .domain( valueNames )
+    .range( [0, x0.bandwidth()] );
+    //.range( [padding, x0.bandwidth()] );
+
+//var z = d3.scaleCategory10();
+var colors = d3.scaleOrdinal(d3.schemeCategory10);
+
+var xAxis = d3.axisBottom()
+    .scale(x0);
+
+var yAxis = d3.axisLeft()
+    .scale(yScale);
+
+var svg = d3.select("body").append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+    .append("svg:g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+svg.append("g")
+    .attr("class", "y axis")
+    .call(yAxis);
+
+svg.append("g")
+    .attr("class", "x axis")
+    .attr("transform", "translate(0," + height + ")")
+    .call(xAxis);
+
+svg.selectAll("g")
+    .data(data)
+    .enter()
+    .append("g")
+
+    .style("fill", function(d, i) {
+      console.log("d=",d);
+      console.log('fill d='+d+", i="+i+", colors(i)="+colors(i));
+      return colors(i); }
+    )
+    .attr("transform", function(d, i) {
+      console.log('transform d='+d+", i="+i+", x1(i)="+x1(i));
+      return "translate(" + x1(i) + ",0)"; }
+    )
+
+    .selectAll("rect")
+    .data(function(d) {
+      console.log("do data d="+d);
+      return d; }
+    )
+    .enter()
+    .append("rect")
+    .attr("width", x1.bandwidth() )
+    .attr("height", function(d,i) {
+      console.log("height("+i+"), d="+d+", yScale(d)="+yScale(d)+", height-yScale(d)="+(height-yScale(d)));
+      //return yScale;
+      return ( height-yScale(d) );
+      }
+    )
+    .attr("x", function(d, i) {
+      console.log('x('+i+') d='+d+", x0(i)="+x0(i));
+      return x0(i); }
+    )
+    .attr("y", function(d, i) {
+      console.log('y('+i+') d='+d+", yScale(d)="+yScale(d)+", height - yScale(d)="+(height - yScale(d)) );
+      return yScale(d); }
+    );
+
+</script>

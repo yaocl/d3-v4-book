@@ -61,26 +61,25 @@ body {
 <script>
 // ref: http://stackoverflow.com/questions/24115053/d3-js-how-to-read-data-from-json-in-grouped-bar-chart
 
-var data = {
-	"cdr": [
-		{ "date":"2016-03-01", "answer": "12", "noanswer": "30" },
-		{ "date":"2016-03-02", "answer": "7", "noanswer": "15" },
-		{ "date":"2016-03-03", "answer": "15", "noanswer": "35" },
-		{ "date":"2016-03-04", "answer": "5", "noanswer": "18" },
-		{ "date":"2016-03-21", "answer": "10", "noanswer": "55" },
-		{ "date":"2016-03-22", "answer": "10", "noanswer": "55" },
-		{ "date":"2016-03-31", "answer": "8", "noanswer": "45" }
-	]
-};
-
 // var data = {
 // 	"cdr": [
-// 		{ "date":"2016-03-04", "answer": "5" },
-// 		{ "date":"2016-03-10", "answer": "5" },
-// 		{ "date":"2016-03-21", "answer": "10" },
-// 		{ "date":"2016-03-22", "answer": "10" }
+// 		{ "date":"2016-03-01", "answer": "12", "noanswer": "30" },
+// 		{ "date":"2016-03-02", "answer": "7", "noanswer": "15" },
+// 		{ "date":"2016-03-03", "answer": "15", "noanswer": "35" },
+// 		{ "date":"2016-03-04", "answer": "5", "noanswer": "18" },
+// 		{ "date":"2016-03-21", "answer": "10", "noanswer": "55" },
+//		{ "date":"2016-03-22", "answer": "10", "noanswer": "55" },
+// 		{ "date":"2016-03-31", "answer": "8", "noanswer": "45" }
 // 	]
 // };
+
+var data = {
+	"cdr": [
+		{ "date":"2016-03", "answer": "5" },
+		{ "date":"2016-04", "answer": "5" },
+		{ "date":"2016-07", "answer": "120" }
+	]
+};
 
 var margin = {top: 20, right: 20, bottom: 30, left: 40},
 		width = 960 - margin.left - margin.right,
@@ -92,7 +91,7 @@ var margin = {top: 20, right: 20, bottom: 30, left: 40},
 
 var x0 = d3.scaleTime()
 		.rangeRound([0, width], .1)
-		.nice(d3.timeDay);
+		.nice(d3.timeMonth);
 
 var x1 = d3.scaleBand();
 
@@ -109,7 +108,7 @@ tooltipcolor(0), tooltipcolor(1);
 
 var xAxis = d3.axisBottom()
 		.scale(x0)
-		.tickFormat(d3.timeFormat('%m-%d'))
+		.tickFormat(d3.timeFormat('%m月'))
 		.tickSize(8);
 
 var yAxis = d3.axisLeft()
@@ -127,9 +126,13 @@ var svg = d3
 // d3.json("data.json", function(error, data) {
 //   if (error) throw error;
 
+	// var ageNames = d3.keys(data.cdr[0]).filter(function(key) {
+	// 	return key !== "date";
+	// });
 	var ageNames = d3.keys(data.cdr[0]).filter(function(key) {
 		return key !== "date";
 	});
+
 	//var ageNames = d3.keys(data[0]).filter(function(key) { return key !== "date"; });
 
 	data.cdr.forEach(function(d) {
@@ -143,24 +146,31 @@ var svg = d3
 
 	//x0.domain(data.cdr.map(function(d) { return d.date; }));
 	var firstDate = new Date(data.cdr[0].date);
-	firstDate.setDate(1);
+	firstDate.setMonth(0);
 
 	var lastDate = new Date(data.cdr[data.cdr.length - 1].date);
-	lastDate.setDate( 1 );
-	lastDate.setMonth( lastDate.getMonth()+1 );
-	lastDate.setDate( 0 );
+	lastDate.setMonth( 11 );
+	lastDate.setDate( 31 );
 
 	//console.log("firstDate="+firstDate+", lastDate="+lastDate);
 	x0.domain(
-			[ d3.timeDay.offset( firstDate ,-1),
-			d3.timeDay.offset( lastDate , 0) ]
+			[ d3.timeMonth.offset( firstDate ,-1),
+			d3.timeMonth.offset( lastDate , 0) ]
 		 );
 
 	x1.domain(ageNames)
 		.range([0, x0( firstDate )]);
 
 	// max value +5 ，多出來的空間可以放右上角的 legend
-	y.domain([0, d3.max(data.cdr, function(d) { return d3.max(d.values, function(d) { return d.value; }) +5 ; })]);
+	y.domain([0, d3.max(data.cdr, function(d) {
+		var maxvalue=d3.max(d.values, function(d) { return d.value; });
+		if( maxvalue<100 ) {
+			maxvalue +=10;
+		} else {
+			maxvalue = Math.ceil(maxvalue*1.1);
+		}
+ 		return maxvalue ;
+	})]);
 
 	// x0.domain(data.map(function(d) { return d.date; }));
 	// x1.domain(ageNames).rangeRoundBands([0, x0.rangeBand()]);
@@ -186,7 +196,7 @@ var svg = d3
 		.enter()
 		.append("g")
 		.attr("class", "g data")
-		.attr("transform", function(d) { return "translate(" + (x0(new Date(d.date))-22 ) + ",0)"; });
+		.attr("transform", function(d) { return "translate(" + (x0(new Date(d.date))-30 ) + ",0)"; });
 
 	// var date = svg.selectAll(".date")
 	//     .data(data)
@@ -198,7 +208,7 @@ var svg = d3
 			.data(function(d) { return d.values; })
 			.enter()
 			.append("rect")
-			.attr("width", x1.bandwidth()-2 )
+			.attr("width", x1.bandwidth()-15 )
 			.attr("x", function(d) {
 					var subvalue = -1;
 					if(d.name=='answer') {
@@ -216,8 +226,8 @@ var svg = d3
 				}
 			)
 			.on("mousemove", function(d, i) {
-				//console.log("i="+i+", d=",d+", color(i)="+color(i)+", color(i+1)="+color(i+1));
-				//console.log("event.pageY="+event.pageY+", event.pageX="+event.pageX);
+				// console.log("i="+i+", d=",d+", color(i)="+color(i)+", color(i+1)="+color(i+1));
+				// console.log("event.pageY="+event.pageY+", event.pageX="+event.pageX);
 
 				var xPosition = event.pageX;
 				var yPosition = event.pageY;
@@ -267,14 +277,9 @@ var svg = d3
 			//New values for dataset
 			newdata = {
 					"cdr": [
-						{ "date":"2016-04-01", "answer": "22", "noanswer": "20" },
-						{ "date":"2016-04-02", "answer": "15", "noanswer": "25" },
-						{ "date":"2016-04-03", "answer": "12", "noanswer": "25" },
-						{ "date":"2016-04-04", "answer": "15", "noanswer": "28" },
-						{ "date":"2016-04-11", "answer": "15", "noanswer": "25" },
-						{ "date":"2016-04-12", "answer": "10", "noanswer": "25" },
-						{ "date":"2016-04-28", "answer": "15", "noanswer": "25" },
-						{ "date":"2016-04-30", "answer": "28", "noanswer": "29" }
+						{ "date":"2016-04", "answer": "22", "noanswer": "20" },
+						{ "date":"2016-06", "answer": "15", "noanswer": "25" },
+						{ "date":"2016-12", "answer": "15", "noanswer": "95" }
 					]
 				};
 
@@ -289,16 +294,15 @@ var svg = d3
 			});
 
 			var firstDate = new Date(newdata.cdr[0].date);
-			firstDate.setDate(1);
+			firstDate.setMonth(0);
 
 			var lastDate = new Date(newdata.cdr[newdata.cdr.length - 1].date);
-			lastDate.setDate( 1 );
-			lastDate.setMonth( lastDate.getMonth()+1 );
-			lastDate.setDate( 0 );
+			lastDate.setMonth( 11 );
+			lastDate.setDate( 31 );
 
 			x0.domain(
-				[ d3.timeDay.offset( firstDate ,-1),
-				d3.timeDay.offset( lastDate, 0) ]
+				[ d3.timeMonth.offset( firstDate ,-1),
+				d3.timeMonth.offset( lastDate, 0) ]
 			 );
 
 			//console.log("newdata.cdr[0].date="+newdata.cdr[0].date);
@@ -307,7 +311,15 @@ var svg = d3
 			x1.domain(newAgeNames)
 				.range([0, x0( firstDate )]);
 
-			y.domain([0, d3.max(newdata.cdr, function(d) { return d3.max(d.values, function(d) { return d.value; }) +5 ; })]);
+			y.domain([0, d3.max(newdata.cdr, function(d) {
+				var maxvalue=d3.max(d.values, function(d) { return d.value; });
+				if( maxvalue<100 ) {
+					maxvalue +=10;
+				} else {
+					maxvalue = Math.ceil(maxvalue*1.1);
+				}
+		 		return maxvalue ;
+			})]);
 
 			xAxis.scale(x0);
 			yAxis.scale(y);
@@ -335,13 +347,13 @@ var svg = d3
 				.enter()
 				.append("g")
 				.attr("class", "g data")
-				.attr("transform", function(d) { return "translate(" + (x0(new Date(d.date))-22 ) + ",0)"; });
+				.attr("transform", function(d) { return "translate(" + (x0(new Date(d.date))-30 ) + ",0)"; });
 
 			var newrect = newdate.selectAll("rect")
 				.data(function(d) { return d.values; })
 				.enter()
 				.append("rect")
-				.attr("width", x1.bandwidth()-2 )
+				.attr("width", x1.bandwidth()-10 )
 				.attr("x", function(d) {
 						var subvalue = -1;
 						if(d.name=='answer') {
@@ -359,8 +371,8 @@ var svg = d3
 					}
 				)
 				.on("mousemove", function(d, i) {
-					//console.log("i="+i+", d=",d+", color(i)="+color(i)+", color(i+1)="+color(i+1));
-					//console.log("event.pageY="+event.pageY+", event.pageX="+event.pageX);
+					// console.log("i="+i+", d=",d+", color(i)="+color(i)+", color(i+1)="+color(i+1));
+					// console.log("event.pageY="+event.pageY+", event.pageX="+event.pageX);
 
 					var xPosition = event.pageX;
 					var yPosition = event.pageY;
