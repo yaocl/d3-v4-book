@@ -301,8 +301,8 @@ function angle(d) {
 					//console.log("i="+i+", d=",d+", color(i)="+color(i)+", color(i+1)="+color(i+1));
 					//console.log("event.pageY="+event.pageY+", event.pageX="+event.pageX);
 
-					var xPosition = event.pageX;
-					var yPosition = event.pageY;
+					var xPosition = d3.event.pageX;
+					var yPosition = d3.event.pageY;
 
 					//Update the tooltip position and value
 					d3.select("#tooltip")
